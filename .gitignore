@@ -2,8 +2,11 @@
 __pycache__/
 *.py[codz]
 *$py.class
-token.json
+echo "token.json
 credentials.json
+token.json
+.env
+venv/" >> .gitignore
 
 # C extensions
 *.so
