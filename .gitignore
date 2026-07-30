@@ -2,11 +2,10 @@
 __pycache__/
 *.py[codz]
 *$py.class
-echo "token.json
 credentials.json
 token.json
 .env
-venv/" >> .gitignore
+venv/
 
 # C extensions
 *.so
