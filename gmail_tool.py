@@ -6,10 +6,16 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# Permissions we need
+# Permissions we need to send emails
+# SCOPES = [
+#    'https://www.googleapis.com/auth/gmail.readonly',
+#    'https://www.googleapis.com/auth/gmail.send',
+# ]
+
+# Draft Permissions
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/gmail.compose',  # ← replaces gmail.send
 ]
 
 def get_gmail_service():
