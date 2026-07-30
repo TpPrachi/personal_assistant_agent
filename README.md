@@ -180,6 +180,42 @@ personal_assistant_agent/
 
 ---
 
+### Google Cloud Setup
+
+1. Go to Google Cloud Console:
+console.cloud.google.com
+
+2. Create a new project:
+
+Click the project dropdown at the top
+Click New Project
+Name it personal-agent
+Click Create
+
+3. Enable Gmail API:
+
+Go to APIs & Services → Library
+Search Gmail API → click it → click Enable
+Search Google Calendar API → click it → click Enable
+
+4. Create OAuth credentials:
+
+Go to APIs & Services → Credentials
+Click Create Credentials → OAuth Client ID
+If asked to configure consent screen first:
+Click Configure Consent Screen
+Choose External
+Fill in App name: Personal Agent
+Add your Gmail as test user
+Save and continue through all steps
+Back in Credentials → Create Credentials → OAuth Client ID
+Application type: Desktop App
+Name: personal-agent
+Click Create
+Click Download JSON → save as credentials.json in your project folder
+
+---
+
 ## License
 
 This project is intended for learning and experimentation.
