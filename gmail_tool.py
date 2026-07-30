@@ -12,10 +12,12 @@ from googleapiclient.discovery import build
 #    'https://www.googleapis.com/auth/gmail.send',
 # ]
 
-# Draft Permissions
+# Draft Permissions and calendar permissions
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.compose',  # ← replaces gmail.send
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar.events',
 ]
 
 def get_gmail_service():

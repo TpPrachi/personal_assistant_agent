@@ -1,7 +1,6 @@
 # agent.py
 import os
 from dotenv import load_dotenv
-from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
@@ -16,13 +15,14 @@ ENV = os.getenv("APP_ENV", "development")
 if ENV == "production":
     from langchain_anthropic import ChatAnthropic
     llm = ChatAnthropic(
-        model='claude-sonnet-4-6',
-        api_key=os.getenv('ANTHROPIC_API_KEY')
+        model="claude-sonnet-4-6",
+        api_key=os.getenv("ANTHROPIC_API_KEY")
     )
     print("🤖 Using Claude (production)")
 else:
+    from langchain_ollama import ChatOllama
     llm = ChatOllama(
-        model='llama3.2',
+        model="llama3.2",
         temperature=0,
     )
     print("🤖 Using Ollama llama3.2 (development)")
@@ -42,7 +42,7 @@ def tool_read_emails(max_results: int = 5) -> str:
 
 @tool
 def tool_create_draft(to: str, subject: str, body: str) -> str:
-    """Create a draft email in Gmail. Never sends directly."""
+    """Create a draft email in Gmail. Never sends directly — always creates a draft for review."""
     return create_draft(to, subject, body)
 
 
@@ -64,18 +64,18 @@ def tool_get_events(days: int = 7) -> str:
 
 
 @tool
-def tool_create_event(title: str, date: str, start_time: str, end_time: str, description: str = '', attendees: str = '') -> str:
+def tool_create_event(title: str, date: str, start_time: str, end_time: str, description: str = "", attendees: str = "") -> str:
     """Create a calendar event.
-    
+
     Args:
         title: Event title
         date: Date in YYYY-MM-DD format
-        start_time: Start time in HH:MM (24hr)
-        end_time: End time in HH:MM (24hr)
+        start_time: Start time in HH:MM format (24hr)
+        end_time: End time in HH:MM format (24hr)
         description: Optional description
-        attendees: Comma separated emails (optional)
+        attendees: Comma separated email addresses (optional)
     """
-    attendee_list = [a.strip() for a in attendees.split(',')] if attendees else []
+    attendee_list = [a.strip() for a in attendees.split(",")] if attendees else []
     return create_event(title, date, start_time, end_time, description, attendee_list)
 
 
@@ -95,10 +95,12 @@ agent = create_react_agent(
 You can:
 - Read emails from the inbox
 - Create email drafts (never send directly)
-- Read upcoming calendar events  
+- Read upcoming calendar events
 - Create new calendar events
 
-Always be concise and helpful. For emails always create drafts so the user can review first."""
+Always be concise and helpful. When creating drafts or events, confirm what you did.
+For emails, always create drafts — never send directly so the user can review first.
+When asked about time, today's date context will be provided in the question."""
 )
 
 
@@ -107,4 +109,4 @@ def ask_agent(question: str) -> str:
     result = agent.invoke({
         "messages": [HumanMessage(content=question)]
     })
-    return result['messages'][-1].content
+    return result["messages"][-1].content
