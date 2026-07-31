@@ -95,15 +95,20 @@ def read_emails(max_results=5):
     return emails
 
 def create_draft(to: str, subject: str, body: str):
-    """Create a draft email instead of sending directly — safer for agent use."""
-    service = get_gmail_service()
+    """Create a draft email instead of sending directly."""
 
+    # Clean the email address — remove any name prefix like "John <john@email.com>"
+    import re
+    match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', to)
+    if match:
+        to = match.group(0)  # extract just the email address
+
+    service = get_gmail_service()
     message = MIMEText(body)
     message['to'] = to
     message['subject'] = subject
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
-
     draft = service.users().drafts().create(
         userId='me',
         body={'message': {'raw': raw}}

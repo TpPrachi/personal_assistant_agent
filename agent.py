@@ -22,62 +22,35 @@ if ENV == "production":
 else:
     from langchain_ollama import ChatOllama
     llm = ChatOllama(
-        model="llama3.2",
+        # model="llama3.2",
+        # model="mistral",
+        model="llama3.1",
         temperature=0,
     )
-    print("🤖 Using Ollama llama3.2 (development)")
+    # print("🤖 Using Ollama llama3.2 (development)")
+    # print("🤖 Using Ollama mistral (development)")
+    print("🤖 Using Ollama llama3.1 (development)")
 
 # ── Define tools ──────────────────────────────────────────────────
 @tool
 def tool_read_emails(max_results: int = 5) -> str:
-    """Read the latest emails from Gmail inbox."""
-    emails = read_emails(max_results)
-    if not emails:
-        return "No emails found."
-    result = ""
-    for e in emails:
-        result += f"From: {e['from']}\nSubject: {e['subject']}\nDate: {e['date']}\nBody: {e['body'][:200]}\n---\n"
-    return result
-
+    """Read latest emails from Gmail."""
+    ...
 
 @tool
 def tool_create_draft(to: str, subject: str, body: str) -> str:
-    """Create a draft email in Gmail. Never sends directly — always creates a draft for review."""
-    return create_draft(to, subject, body)
-
+    """Create a Gmail draft. Args: to=email address, subject=subject line, body=email text."""
+    ...
 
 @tool
 def tool_get_events(days: int = 7) -> str:
-    """Get upcoming calendar events for the next N days."""
-    events = get_upcoming_events(days)
-    if not events:
-        return f"No events in the next {days} days."
-    result = ""
-    for e in events:
-        result += f"📅 {e['title']}\n   Start: {e['start']}\n   End: {e['end']}\n"
-        if e['location']:
-            result += f"   📍 {e['location']}\n"
-        if e['attendees']:
-            result += f"   👥 {', '.join(e['attendees'])}\n"
-        result += "---\n"
-    return result
-
+    """Get upcoming Google Calendar events."""
+    ...
 
 @tool
 def tool_create_event(title: str, date: str, start_time: str, end_time: str, description: str = "", attendees: str = "") -> str:
-    """Create a calendar event.
-
-    Args:
-        title: Event title
-        date: Date in YYYY-MM-DD format
-        start_time: Start time in HH:MM format (24hr)
-        end_time: End time in HH:MM format (24hr)
-        description: Optional description
-        attendees: Comma separated email addresses (optional)
-    """
-    attendee_list = [a.strip() for a in attendees.split(",")] if attendees else []
-    return create_event(title, date, start_time, end_time, description, attendee_list)
-
+    """Create a Google Calendar event. Date format: YYYY-MM-DD. Time format: HH:MM."""
+    ...
 
 # ── Create agent ──────────────────────────────────────────────────
 tools = [
@@ -90,17 +63,14 @@ tools = [
 agent = create_react_agent(
     model=llm,
     tools=tools,
-    prompt="""You are a helpful personal assistant with access to Gmail and Google Calendar.
+    prompt="""You are a personal assistant. Use tools to help with emails and calendar.
 
-You can:
-- Read emails from the inbox
-- Create email drafts (never send directly)
-- Read upcoming calendar events
-- Create new calendar events
-
-Always be concise and helpful. When creating drafts or events, confirm what you did.
-For emails, always create drafts — never send directly so the user can review first.
-When asked about time, today's date context will be provided in the question."""
+Rules:
+- ALWAYS use a tool to answer. Never guess.
+- For emails: use tool_read_emails
+- For drafts: use tool_create_draft  
+- For calendar: use tool_get_events
+- For new events: use tool_create_event"""
 )
 
 

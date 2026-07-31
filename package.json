@@ -1,0 +1,8 @@
+{
+  "name": "personal-assistant-agent",
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "uvicorn main:app --reload",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  }
+}

@@ -10,9 +10,31 @@ A Python-based AI agent that connects to your Gmail and Google Calendar. Ask it 
 - 📝 **Draft emails** — agent creates drafts, never sends directly (safety first)
 - 📅 **Read calendar** — see upcoming events and meetings
 - 🗓️ **Create events** — add new events to your Google Calendar
-- 🤖 **Agent brain** — LangGraph + LLM decides which tool to use automatically
-- 🦙 **Free local dev** — runs on Ollama llama3.2, zero cost, no internet needed
+- 🧠 **Agent thinking** — see the agent reason step by step in the UI
+- 🤖 **Auto tool selection** — LangGraph + LLM decides which tool to use automatically
+- 🦙 **Free local dev** — runs on Ollama llama3.1, zero cost, no internet needed
+- ☀️🌙 **Theme toggle** — dark and light mode
 - ☁️ **Production ready** — one env var switches to Anthropic Claude
+
+---
+
+## Live Demo
+
+Ask the agent things like:
+
+```
+"What are my latest 5 emails?"
+→ Agent calls tool_read_emails → summarizes your inbox
+
+"Draft an email to talent@empowerpharmacy.com, subject 'Thank you', body 'Dear Team...'"
+→ Agent calls tool_create_draft → creates draft in Gmail for review
+
+"What meetings do I have this week?"
+→ Agent calls tool_get_events → lists your calendar events
+
+"Create a meeting called Standup tomorrow at 10am to 11am"
+→ Agent calls tool_create_event → adds event to Google Calendar
+```
 
 ---
 
@@ -30,55 +52,41 @@ The agent reasons in a loop, picking the right tool automatically based on what 
 
 ---
 
-## Example conversations
-
-```
-You:   "What are my latest emails?"
-Agent: Calls tool_read_emails → summarizes your inbox
-
-You:   "Draft an email to john@email.com about the project update"
-Agent: Calls tool_create_draft → creates draft in Gmail for you to review
-
-You:   "What meetings do I have this week?"
-Agent: Calls tool_get_events → lists your calendar events
-
-You:   "Schedule a meeting called standup tomorrow at 10am to 11am"
-Agent: Calls tool_create_event → adds event to Google Calendar
-```
-
----
-
 ## Tech Stack
 
 | Layer | Tool | Why |
 |---|---|---|
 | Language | Python 3.12 | Industry standard for AI |
-| LLM (dev) | Ollama `llama3.2` | Free, offline, no API key |
+| LLM (dev) | Ollama `llama3.1` | Free, offline, better tool calling |
 | LLM (prod) | Anthropic `claude-sonnet-4-6` | One env var switch |
 | Agent framework | LangGraph | Agent orchestration |
-| Backend | FastAPI | Python equivalent of Express.js |
+| Backend | FastAPI + SSE | Streaming agent thinking steps |
 | Email | Gmail API | Read inbox, create drafts |
 | Calendar | Google Calendar API | Read and create events |
 | Auth | Google OAuth 2.0 | Secure Gmail/Calendar access |
+| Frontend | React + Vite | Chat UI with theme toggle |
 
 ---
 
 ## Project Structure
 
 ```
-personal-agent/
+personal-assistant-agent/
 ├── agent.py              # LangGraph agent brain + tool definitions
-├── main.py               # FastAPI server
+├── main.py               # FastAPI server with SSE streaming
 ├── gmail_tool.py         # Gmail read + draft creation
 ├── calendar_tool.py      # Google Calendar read + create events
 ├── test_agent.py         # Test all agent capabilities
 ├── test_gmail.py         # Test Gmail connection only
 ├── test_calendar.py      # Test Calendar connection only
-├── credentials.json      # Google OAuth credentials (never commit!)
-├── token.json            # Auto-generated auth token (never commit!)
+├── requirements.txt      # Python dependencies
 ├── .env                  # API keys (never commit!)
 ├── .gitignore
-└── requirements.txt
+└── client/               # React chat UI
+    ├── index.html
+    └── src/
+        ├── main.jsx
+        └── App.jsx       # Chat UI with thinking steps + theme toggle
 ```
 
 ---
@@ -86,6 +94,7 @@ personal-agent/
 ## Prerequisites
 
 - Python 3.9+
+- Node.js 18+ (for React UI)
 - [Ollama](https://ollama.com) installed locally
 - Google Cloud project with Gmail + Calendar APIs enabled
 
@@ -105,14 +114,14 @@ python3 -m venv venv
 source venv/bin/activate  # Mac/Linux
 ```
 
-### 3. Install dependencies
+### 3. Install Python dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
 Or manually:
 ```bash
-pip install fastapi uvicorn anthropic python-dotenv \
+pip install fastapi uvicorn python-dotenv \
   google-auth-oauthlib google-auth-httplib2 google-api-python-client \
   langgraph langchain-anthropic langchain-core langchain-ollama
 ```
@@ -125,7 +134,8 @@ ANTHROPIC_API_KEY=sk-ant-...   # only needed for production
 
 ### 5. Pull Ollama model
 ```bash
-ollama pull llama3.2
+# llama3.1 is recommended — better tool calling than llama3.2
+ollama pull llama3.1
 ollama serve
 ```
 
@@ -146,32 +156,54 @@ python3 test_gmail.py
 ```
 Browser opens → log in → allow permissions → `token.json` saved automatically.
 
+### 8. Install React dependencies
+```bash
+cd client
+npm install
+cd ..
+```
+
 ---
 
-## Running the app
+## Running the App
 
-### Test the agent
+You need 3 terminals:
+
 ```bash
-# Make sure Ollama is running
+# Terminal 1 — Ollama
 ollama serve
 
-# Activate venv
+# Terminal 2 — FastAPI backend
 source venv/bin/activate
+uvicorn main:app --reload
 
-# Run tests
+# Terminal 3 — React frontend
+cd client
+npm run dev
+```
+
+Open **http://localhost:5173** in your browser.
+
+---
+
+## Usage
+
+### React Chat UI
+Open http://localhost:5173 — click a quick prompt or type your own question.
+
+### CLI mode
+```bash
 python3 test_agent.py
 ```
 
-### Start the API server
+### API directly
 ```bash
-uvicorn main:app --reload
+curl "http://localhost:8000/api/ask?q=What+are+my+latest+emails"
 ```
 
-### Ask the agent via API
+### Switch to production (Anthropic Claude)
 ```bash
-curl -X POST http://localhost:8000/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What are my latest emails?"}'
+APP_ENV=production ANTHROPIC_API_KEY=sk-ant-... uvicorn main:app --reload
 ```
 
 ---
@@ -181,25 +213,36 @@ curl -X POST http://localhost:8000/ask \
 | | Development | Production |
 |---|---|---|
 | `APP_ENV` | unset (default) | `production` |
-| LLM | Ollama llama3.2 | Anthropic Claude |
+| LLM | Ollama llama3.1 | Anthropic Claude |
 | Cost | Free | Pay per token |
 | Internet | Not needed | Required |
 
-```bash
-# Development (default — uses Ollama)
-python3 test_agent.py
+---
 
-# Production (uses Claude)
-APP_ENV=production ANTHROPIC_API_KEY=sk-ant-... python3 test_agent.py
+## Agent Thinking UI
+
+The React UI shows the agent reasoning in real time:
+
 ```
+🧠 Using tool: tool_read_emails...   ← agent decides which tool
+📦 Tool result ▼                     ← raw data (click to expand)
+💬 Here are your latest 5 emails...  ← final answer
+```
+
+This uses Server-Sent Events (SSE) to stream each step as it happens.
 
 ---
 
 ## Gmail Safety — Drafts Only
 
-The agent **never sends emails directly**. It always creates drafts that you review in Gmail before sending. This is intentional — you stay in control.
+The agent **never sends emails directly**. It always creates drafts you review in Gmail before sending.
 
 To send: open Gmail → Drafts → review → send manually.
+
+**Pro tip for drafting replies:** Be explicit with the prompt:
+```
+Draft email to talent@company.com, subject "Re: Job Application", body "Dear Team, thank you..."
+```
 
 ---
 
@@ -214,36 +257,20 @@ To send: open Gmail → Drafts → review → send manually.
 
 ---
 
-## How the Agent Thinks
+## Why llama3.1 over llama3.2?
 
-```
-You ask a question
-        │
-        ▼
-LangGraph agent receives it
-        │
-        ▼
-LLM reads the question + available tools
-        │
-        ▼
-LLM decides which tool to call
-        │
-        ▼
-Tool executes (Gmail / Calendar API)
-        │
-        ▼
-LLM reads the tool result
-        │
-        ▼
-LLM decides if done or needs another tool
-        │
-        ▼
-Final answer returned to you
-```
+| Model | Size | Tool calling |
+|---|---|---|
+| `llama3.2` | 3B | ❌ Unreliable |
+| `llama3.1` | 8B | ✅ Good |
+| `mistral` | 7B | ✅ Good |
+| `claude-sonnet-4-6` | — | ✅ Excellent |
+
+Tool calling requires the model to output structured JSON that LangGraph can parse. Smaller models like llama3.2 often return raw JSON instead of executing the tool. llama3.1 at 8B handles this reliably.
 
 ---
 
-## Important — Never commit secrets!
+## Important — Never Commit Secrets!
 
 Your `.gitignore` must contain:
 ```
@@ -255,7 +282,36 @@ __pycache__/
 *.pyc
 ```
 
-GitHub's secret scanning will block your push if these files are committed.
+GitHub's secret scanning will block your push if these files are committed. If it happens, use `git filter-repo` to remove them from history.
+
+---
+
+## How the Agent Thinks
+
+```
+You ask a question
+        │
+        ▼
+LangGraph agent receives it
+        │
+        ▼
+LLM reads question + available tools
+        │
+        ▼
+LLM picks the right tool
+        │
+        ▼
+Tool calls Gmail or Calendar API
+        │
+        ▼
+LLM reads the result
+        │
+        ▼
+LLM decides if done or needs another tool
+        │
+        ▼
+Streams final answer to React UI
+```
 
 ---
 
@@ -263,21 +319,24 @@ GitHub's secret scanning will block your push if these files are committed.
 
 - [x] FastAPI backend
 - [x] Gmail read emails
-- [x] Gmail create drafts (safety first)
+- [x] Gmail create drafts (safety first — no direct sending)
 - [x] Google Calendar read events
 - [x] Google Calendar create events
 - [x] LangGraph agent with automatic tool selection
+- [x] Streaming agent thinking steps via SSE
+- [x] React chat UI with dark/light theme toggle
 - [x] Ollama local dev → Claude production switch
-- [ ] React chat UI
-- [ ] Streaming responses (see agent think step by step)
 - [ ] Web search tool
+- [ ] Conversation history per session
 - [ ] Deploy to production
 
 ---
 
 ## Related Project
 
-Built as a follow-up to the [RAG Demo](https://github.com/TpPrachi/rag-demo) — a Node.js RAG system with ChromaDB, Ollama, streaming responses and a React chat UI.
+Built as a follow-up to the [RAG Demo](https://github.com/TpPrachi/rag-demo) — a Node.js RAG system with ChromaDB, Ollama, streaming responses, and a React chat UI.
+
+---
 
 ## Python vs JavaScript Cheat Sheet
 
@@ -291,6 +350,8 @@ Built as a follow-up to the [RAG Demo](https://github.com/TpPrachi/rag-demo) —
 | `node index.js` | `python main.py` |
 | `{}` object | `{}` dict |
 | `array.map()` | `[x for x in array]` |
+
+---
 
 ## License
 
