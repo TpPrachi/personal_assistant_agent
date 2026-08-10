@@ -1,0 +1,46 @@
+name: Build & Deploy to GKE
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/personal-assistant-agent:${{ github.sha }}
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Build and push image
+        run: |
+          gcloud builds submit --tag $IMAGE
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --zone ${{ secrets.GKE_ZONE }} --project ${{ secrets.GCP_PROJECT }}
+
+      - name: Set image on deployment
+        run: |
+          kubectl set image deployment/personal-assistant-agent personal-assistant-agent=$IMAGE --record
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/personal-assistant-agent
+
+# Required repository secrets:
+# - GCP_PROJECT
+# - GCP_SA_KEY
+# - GKE_CLUSTER
+# - GKE_ZONE

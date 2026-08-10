@@ -1,0 +1,42 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/personal-assistant-agent:${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Build and push container image (Cloud Build)
+        run: |
+          gcloud builds submit --tag $IMAGE
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ secrets.CLOUD_RUN_SERVICE }} \
+            --image $IMAGE \
+            --region ${{ secrets.CLOUD_RUN_REGION }} \
+            --platform managed \
+            --allow-unauthenticated
+
+# Required repository secrets:
+# - GCP_PROJECT: Google Cloud project ID
+# - GCP_SA_KEY: JSON service account key (with Cloud Run deploy & Cloud Build permissions)
+# - CLOUD_RUN_SERVICE: Cloud Run service name to create/update
+# - CLOUD_RUN_REGION: e.g. us-central1

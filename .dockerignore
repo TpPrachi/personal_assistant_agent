@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtualenv
+venv/
+.env
+.venv/
+
+# Node
+client/node_modules/
+node_modules/
+
+# Git
+.git
+
+# Google/GCP local files
+token.json
+credentials.json
+
+# Misc
+*.log
+*.sqlite3

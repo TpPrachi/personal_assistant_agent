@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: personal-assistant-agent
+spec:
+  type: LoadBalancer
+  selector:
+    app: personal-assistant-agent
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
