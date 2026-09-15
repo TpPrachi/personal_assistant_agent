@@ -353,6 +353,34 @@ Built as a follow-up to the [RAG Demo](https://github.com/TpPrachi/rag-demo) —
 
 ---
 
+## What is MCP?
+
+MCP stands for Model Context Protocol.
+
+It's an open standard created by Anthropic that lets AI models connect to external tools and data sources in a standardized way.
+
+Think of it like USB for AI tools.
+
+Before USB, every device had a different plug. After USB, one standard worked everywhere. MCP does the same for AI tools.
+
+Before MCP every agent integration was custom:
+```
+Agent + Gmail    → custom code
+Agent + Slack    → different custom code
+Agent + GitHub   → yet another custom integration
+Agent + Notion   → completely different again
+```
+With MCP:
+```
+Agent → MCP protocol → any MCP server
+                        ├── Gmail MCP server
+                        ├── Slack MCP server
+                        ├── GitHub MCP server
+                        └── Notion MCP server
+```
+
+---
+
 ## License
 
 MIT
